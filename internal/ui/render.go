@@ -11,51 +11,51 @@ import (
 )
 
 const (
-	// Fixed widths for consistent layout
+	// fixed widths for consistent layout
 	TotalWidth    = 76
 	LeftColWidth  = 36
 	RightColWidth = 36
 	ColGap        = 2
 )
 
-// Render produces the complete terminal output
+// render produces the complete terminal output
 func Render(stats *analyzer.Stats, archetype *analyzer.Archetype) string {
 	var sb strings.Builder
 
-	// Header
+	// header
 	sb.WriteString("\n")
 	sb.WriteString(RenderHeader())
 	sb.WriteString("\n\n")
 
-	// Hero section: Total commands + Archetype (side by side, same height)
+	// hero section: total commands + archetype (side by side, same height)
 	heroLeft := renderHeroStats(stats)
 	heroRight := renderArchetype(archetype)
 	
-	// Ensure same height
+	// ensure same height
 	heroLeftStyled := lipgloss.NewStyle().Height(8).Render(heroLeft)
 	heroRightStyled := lipgloss.NewStyle().Height(8).Render(heroRight)
 	sb.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, heroLeftStyled, "  ", heroRightStyled))
 	sb.WriteString("\n\n")
 
-	// Quick stats row
+	// quick stats row
 	sb.WriteString(renderQuickStats(stats))
 	sb.WriteString("\n\n")
 
-	// Middle section: Top commands + Right panel (aligned heights)
+	// middle section: top commands + right panel (aligned heights)
 	topCmds := renderTopCommands(stats)
 	rightPanel := renderRightPanel(stats)
 	sb.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, topCmds, "  ", rightPanel))
 	sb.WriteString("\n\n")
 
-	// Fun facts row
+	// fun facts row
 	sb.WriteString(renderFunFacts(stats))
 	sb.WriteString("\n\n")
 
-	// History tip
+	// history tip
 	sb.WriteString(RenderHistoryTip())
 	sb.WriteString("\n\n")
 
-	// Footer
+	// footer
 	sb.WriteString(RenderFooter())
 	sb.WriteString("\n")
 
@@ -104,7 +104,7 @@ func renderArchetype(arch *analyzer.Archetype) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(ColorBright)
 	taglineStyle := lipgloss.NewStyle().Foreground(ColorMuted).Italic(true)
 
-	// Wrap tagline if needed (max ~28 chars per line)
+	// wrap tagline if needed (max ~28 chars per line)
 	tagline := arch.Tagline
 	tagline1 := tagline
 	tagline2 := ""
@@ -143,10 +143,10 @@ func renderQuickStats(stats *analyzer.Stats) string {
 
 	headerStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
 
-	// Fixed-width columns for alignment
+	// fixed-width columns for alignment
 	colWidth := 14
 
-	// Create stat items with fixed widths
+	// create stat items with fixed widths
 	items := []struct {
 		label string
 		value string
@@ -160,7 +160,7 @@ func renderQuickStats(stats *analyzer.Stats) string {
 
 	header := headerStyle.Render("-- QUICK STATS ") + SubtleStyle.Render(strings.Repeat("-", 57))
 
-	// Build columns with fixed width
+	// build columns with fixed width
 	var labelRow strings.Builder
 	var valueRow strings.Builder
 
@@ -189,7 +189,7 @@ func formatBusiestDay(stats *analyzer.Stats) string {
 }
 
 func sudoMeter(count int) string {
-	// Scale based on count, not percentage
+	// scale based on count, not percentage
 	var level string
 	var blocks int
 	switch {
@@ -235,7 +235,7 @@ func renderTopCommands(stats *analyzer.Stats) string {
 		maxCount = stats.TopCommands[0].Count
 	}
 
-	// Show top 8
+	// show top 8
 	for i, cmd := range stats.TopCommands {
 		if i >= 8 {
 			break
@@ -289,7 +289,7 @@ func renderCategoryMix(stats *analyzer.Stats) string {
 	var lines []string
 	lines = append(lines, headerStyle.Render("-- CATEGORIES ")+SubtleStyle.Render(strings.Repeat("-", 19)))
 
-	// Sort categories by usage
+	// sort categories by usage
 	type catItem struct {
 		name string
 		pct  float64
@@ -302,7 +302,7 @@ func renderCategoryMix(stats *analyzer.Stats) string {
 		return cats[i].pct > cats[j].pct
 	})
 
-	// Display in 2 columns, up to 8 categories
+	// display in 2 columns, up to 8 categories
 	for i := 0; i < len(cats) && i < 8; i += 2 {
 		cat1 := cats[i]
 		color1 := CategoryColors[cat1.name]
@@ -310,7 +310,7 @@ func renderCategoryMix(stats *analyzer.Stats) string {
 			color1 = ColorMuted
 		}
 
-		// Fixed width columns: bar(4) + space + name(7) + space + pct(3) = 16
+		// fixed width columns: bar(4) + space + name(7) + space + pct(3) = 16
 		col1 := fmt.Sprintf("%s %-7s%3.0f%%",
 			MiniBar(cat1.pct, color1),
 			TruncateString(cat1.name, 7),
@@ -378,7 +378,7 @@ func renderFunFacts(stats *analyzer.Stats) string {
 	var lines []string
 	lines = append(lines, headerStyle.Render("-- INSIGHTS ")+SubtleStyle.Render(strings.Repeat("-", 61)))
 
-	// Collect facts as pairs for 2-column layout
+	// collect facts as pairs for 2-column layout
 	type fact struct {
 		icon  string
 		label string
@@ -405,7 +405,7 @@ func renderFunFacts(stats *analyzer.Stats) string {
 		facts = append(facts, fact{"|>", "Complexity", fmt.Sprintf("%.1f%% use pipes", stats.PipePct)})
 	}
 
-	// Render in 2 columns
+	// render in 2 columns
 	colWidth := 36
 	for i := 0; i < len(facts); i += 2 {
 		f1 := facts[i]

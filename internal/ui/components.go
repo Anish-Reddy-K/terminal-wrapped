@@ -7,9 +7,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Color palette - vibrant and eye-catching
+// color palette - vibrant and eye-catching
 var (
-	// Primary colors
+	// primary colors
 	ColorPrimary   = lipgloss.Color("#FF6B6B") // Coral red
 	ColorSecondary = lipgloss.Color("#4ECDC4") // Teal
 	ColorAccent    = lipgloss.Color("#FFE66D") // Yellow
@@ -19,12 +19,12 @@ var (
 	ColorOrange    = lipgloss.Color("#F97316") // Orange
 	ColorPink      = lipgloss.Color("#EC4899") // Pink
 
-	// Neutral colors
+	// neutral colors
 	ColorDim    = lipgloss.Color("#6B7280") // Gray
 	ColorMuted  = lipgloss.Color("#9CA3AF") // Light gray
 	ColorBright = lipgloss.Color("#F9FAFB") // White
 
-	// Heatmap colors (low to high intensity) - more contrast
+	// heatmap colors (low to high intensity) - more contrast
 	HeatmapColors = []lipgloss.Color{
 		lipgloss.Color("#2d2d2d"), // Empty/very low
 		lipgloss.Color("#0e4429"), // Low green
@@ -37,9 +37,9 @@ var (
 	}
 )
 
-// Styles
+// styles
 var (
-	// Box styles
+	// box styles
 	BoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ColorDim).
@@ -50,7 +50,7 @@ var (
 				BorderForeground(ColorPrimary).
 				Padding(0, 1)
 
-	// Text styles
+	// text styles
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(ColorBright)
@@ -69,7 +69,7 @@ var (
 	SubtleStyle = lipgloss.NewStyle().
 			Foreground(ColorDim)
 
-	// Category colors
+	// category colors
 	CategoryColors = map[string]lipgloss.Color{
 		"Git":        ColorOrange,
 		"Containers": ColorBlue,
@@ -82,7 +82,7 @@ var (
 	}
 )
 
-// ProgressBar creates a horizontal progress bar
+// progressBar creates a horizontal progress bar
 func ProgressBar(value, max int, width int, color lipgloss.Color) string {
 	if max == 0 {
 		max = 1
@@ -100,7 +100,7 @@ func ProgressBar(value, max int, width int, color lipgloss.Color) string {
 	return bar
 }
 
-// MiniBar creates a compact 4-block progress bar for categories
+// miniBar creates a compact 4-block progress bar for categories
 func MiniBar(pct float64, color lipgloss.Color) string {
 	blocks := int(pct / 10) // 10% per block, max 10 blocks but we cap at 4 for display
 	if blocks > 4 {
@@ -116,11 +116,11 @@ func MiniBar(pct float64, color lipgloss.Color) string {
 	return filledStyle.Render(strings.Repeat("█", blocks)) + emptyStyle.Render(strings.Repeat("░", 4-blocks))
 }
 
-// Heatmap creates a 7x6 compact heatmap (7 days, 6 time blocks of 4 hours each)
+// heatmap creates a 7x6 compact heatmap (7 days, 6 time blocks of 4 hours each)
 func Heatmap(data [7][24]int) string {
 	var sb strings.Builder
 
-	// Aggregate into 4-hour blocks first and find max
+	// aggregate into 4-hour blocks first and find max
 	blocks := [7][6]int{}
 	maxVal := 1
 
@@ -138,7 +138,7 @@ func Heatmap(data [7][24]int) string {
 		}
 	}
 
-	// Header - compact with padded hours
+	// header - compact with padded hours
 	header := "   00 04 08 12 16 20"
 	sb.WriteString(SubtleStyle.Render(header))
 	sb.WriteString("\n")
@@ -151,7 +151,7 @@ func Heatmap(data [7][24]int) string {
 		for block := 0; block < 6; block++ {
 			sum := blocks[day][block]
 
-			// Normalize and get color
+			// normalize and get color
 			var colorIdx int
 			if sum == 0 {
 				colorIdx = 0
@@ -172,7 +172,7 @@ func Heatmap(data [7][24]int) string {
 	return sb.String()
 }
 
-// FormatNumber formats a number with commas
+// formatNumber formats a number with commas
 func FormatNumber(n int) string {
 	if n < 0 {
 		return "-" + FormatNumber(-n)
@@ -194,7 +194,7 @@ func FormatNumber(n int) string {
 	return result.String()
 }
 
-// TruncateString truncates a string to max length with ellipsis
+// truncateString truncates a string to max length with ellipsis
 func TruncateString(s string, maxLen int) string {
 	if len(s) <= maxLen {
 		return s
@@ -205,7 +205,7 @@ func TruncateString(s string, maxLen int) string {
 	return s[:maxLen-3] + "..."
 }
 
-// CenterText centers text within a given width
+// centerText centers text within a given width
 func CenterText(s string, width int) string {
 	visibleWidth := lipgloss.Width(s)
 	if visibleWidth >= width {
@@ -215,7 +215,7 @@ func CenterText(s string, width int) string {
 	return strings.Repeat(" ", padding) + s + strings.Repeat(" ", width-visibleWidth-padding)
 }
 
-// RightAlign right-aligns text within a given width
+// rightAlign right-aligns text within a given width
 func RightAlign(s string, width int) string {
 	if len(s) >= width {
 		return s
@@ -223,13 +223,13 @@ func RightAlign(s string, width int) string {
 	return strings.Repeat(" ", width-len(s)) + s
 }
 
-// JoinHorizontal joins multiple strings horizontally with a gap
+// joinHorizontal joins multiple strings horizontally with a gap
 func JoinHorizontal(gap int, blocks ...string) string {
 	if len(blocks) == 0 {
 		return ""
 	}
 
-	// Split each block into lines
+	// split each block into lines
 	blockLines := make([][]string, len(blocks))
 	maxLines := 0
 
@@ -240,7 +240,7 @@ func JoinHorizontal(gap int, blocks ...string) string {
 		}
 	}
 
-	// Find width of each block
+	// find width of each block
 	blockWidths := make([]int, len(blocks))
 	for i, lines := range blockLines {
 		for _, line := range lines {
@@ -251,7 +251,7 @@ func JoinHorizontal(gap int, blocks ...string) string {
 		}
 	}
 
-	// Build output
+	// build output
 	var result strings.Builder
 	gapStr := strings.Repeat(" ", gap)
 
@@ -261,7 +261,7 @@ func JoinHorizontal(gap int, blocks ...string) string {
 			if lineIdx < len(lines) {
 				line = lines[lineIdx]
 			}
-			// Pad to block width
+			// pad to block width
 			lineLen := lipgloss.Width(line)
 			if lineLen < blockWidths[blockIdx] {
 				line += strings.Repeat(" ", blockWidths[blockIdx]-lineLen)
@@ -279,7 +279,7 @@ func JoinHorizontal(gap int, blocks ...string) string {
 	return result.String()
 }
 
-// SectionHeader creates a styled section header
+// sectionHeader creates a styled section header
 func SectionHeader(title string, width int) string {
 	style := lipgloss.NewStyle().
 		Foreground(ColorSecondary).

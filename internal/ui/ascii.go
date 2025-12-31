@@ -15,12 +15,12 @@ const asciiArt = `
   |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|_|    \/\/ |_|  \__,_| .__/| .__/ \___|\__,_|
                                                             |_|   |_|              `
 
-// RenderHeader renders the colorful ASCII art header
+// renderHeader renders the colorful ASCII art header
 func RenderHeader() string {
 	lines := strings.Split(strings.TrimPrefix(asciiArt, "\n"), "\n")
 	var result strings.Builder
 
-	// Create gradient effect
+	// create gradient effect
 	colors := []lipgloss.Color{
 		ColorPrimary,   // Coral
 		ColorOrange,    // Orange
@@ -31,7 +31,7 @@ func RenderHeader() string {
 	}
 
 	for _, line := range lines {
-		// Apply gradient to each character
+		// apply gradient to each character
 		runes := []rune(line)
 		for i, r := range runes {
 			if r == ' ' {
@@ -51,7 +51,7 @@ func RenderHeader() string {
 	return strings.TrimSuffix(result.String(), "\n")
 }
 
-// RenderFooter renders the footer with sharing info and branding
+// renderFooter renders the footer with sharing info and branding
 func RenderFooter() string {
 	lineStyle := lipgloss.NewStyle().Foreground(ColorDim)
 	linkStyle := lipgloss.NewStyle().Foreground(ColorSecondary)
@@ -60,11 +60,11 @@ func RenderFooter() string {
 
 	line := lineStyle.Render(strings.Repeat("-", 76))
 	
-	// Line 1: GitHub link
+	// line 1: GitHub link
 	link := linkStyle.Render("github.com/Anish-Reddy-K/terminal-wrapped")
 	line1 := CenterText(link, 76)
 	
-	// Line 2: Share + branding
+	// line 2: Share + branding
 	share := SubtleStyle.Render("Share on X with ") + hashtagStyle.Render("#TerminalWrapped")
 	brand := brandStyle.Render("by Anish Reddy (arkr.ca)")
 	line2 := "  " + share + strings.Repeat(" ", 76-lipgloss.Width(share)-lipgloss.Width(brand)-4) + brand
