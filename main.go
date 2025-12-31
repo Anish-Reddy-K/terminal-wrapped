@@ -10,20 +10,20 @@ import (
 )
 
 func main() {
-	// Auto-detect shell
+	// auto-detect shell
 	shell := parser.DetectShell()
 
-	// Get history file path
+	// get history file path
 	historyPath := parser.GetHistoryPath(shell)
 
-	// Check if history file exists
+	// check if history file exists
 	if _, err := os.Stat(historyPath); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "Error: History file not found: %s\n", historyPath)
 		fmt.Fprintf(os.Stderr, "Make sure you're using zsh or bash.\n")
 		os.Exit(1)
 	}
 
-	// Parse history
+	// parse history
 	data, err := parser.Parse(historyPath, shell)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing history: %v\n", err)
@@ -35,12 +35,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Analyze
+	// analyze
 	stats := analyzer.Analyze(data)
 
-	// Detect archetype
+	// detect archetype
 	archetype := analyzer.DetectArchetype(stats)
 
-	// Render output
+	// render output
 	fmt.Print(ui.Render(stats, archetype))
 }
