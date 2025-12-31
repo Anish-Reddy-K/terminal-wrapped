@@ -10,21 +10,21 @@ import (
 	"time"
 )
 
-// Command represents a single command from history
+// command represents a single command from history
 type Command struct {
 	Raw       string
-	Command   string    // First word (the actual command)
-	Args      []string  // Arguments
-	Timestamp time.Time // Zero value if no timestamp available
-	HasTime   bool      // Whether we have timestamp data
+	Command   string    // first word (the actual command)
+	Args      []string  // arguments
+	Timestamp time.Time // zero value if no timestamp available
+	HasTime   bool      // whether we have timestamp data
 }
 
-// HistoryData contains all parsed history information
+// historyData contains all parsed history information
 type HistoryData struct {
 	Commands  []Command
 	Shell     string // "zsh" or "bash"
 	FilePath  string
-	HasTimes  bool // Whether timestamps are available
+	HasTimes  bool // whether timestamps are available
 	ParsedAt  time.Time
 	LineCount int
 }
@@ -32,7 +32,7 @@ type HistoryData struct {
 // zsh extended history format: `: 1703961234:0;command`
 var zshExtendedRegex = regexp.MustCompile(`^:\s*(\d+):\d+;(.*)$`)
 
-// DetectShell tries to detect the current shell
+// detectShell tries to detect the current shell
 func DetectShell() string {
 	shell := os.Getenv("SHELL")
 	if strings.Contains(shell, "zsh") {
@@ -41,23 +41,23 @@ func DetectShell() string {
 	if strings.Contains(shell, "bash") {
 		return "bash"
 	}
-	// Default to zsh as it's more common on modern systems
+	// default to zsh as it's more common on modern systems
 	return "zsh"
 }
 
-// GetHistoryPath returns the default history file path for a shell
+// getHistoryPath returns the default history file path for a shell
 func GetHistoryPath(shell string) string {
 	home, _ := os.UserHomeDir()
 	
 	switch shell {
 	case "zsh":
-		// Check HISTFILE env first
+		// check HISTFILE env first
 		if histFile := os.Getenv("HISTFILE"); histFile != "" {
 			return histFile
 		}
 		return filepath.Join(home, ".zsh_history")
 	case "bash":
-		// Check HISTFILE env first
+		// check HISTFILE env first
 		if histFile := os.Getenv("HISTFILE"); histFile != "" {
 			return histFile
 		}
@@ -67,7 +67,7 @@ func GetHistoryPath(shell string) string {
 	}
 }
 
-// Parse reads and parses a shell history file
+// parse reads and parses a shell history file
 func Parse(historyPath string, shell string) (*HistoryData, error) {
 	file, err := os.Open(historyPath)
 	if err != nil {
@@ -83,7 +83,7 @@ func Parse(historyPath string, shell string) (*HistoryData, error) {
 	}
 
 	scanner := bufio.NewScanner(file)
-	// Increase buffer size for very long commands
+	// increase buffer size for very long commands
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, 1024*1024)
 
@@ -94,7 +94,7 @@ func Parse(historyPath string, shell string) (*HistoryData, error) {
 		line := scanner.Text()
 		data.LineCount++
 
-		// Handle multiline commands (ending with \)
+		// handle multiline commands (ending with \)
 		if inMultiline {
 			multilineCmd.WriteString("\n")
 			multilineCmd.WriteString(line)
@@ -127,7 +127,7 @@ func Parse(historyPath string, shell string) (*HistoryData, error) {
 		}
 	}
 
-	// Handle any remaining multiline command
+	// handle any remaining multiline command
 	if multilineCmd.Len() > 0 {
 		cmd := parseCommand(multilineCmd.String(), shell)
 		if cmd != nil {
@@ -138,6 +138,7 @@ func Parse(historyPath string, shell string) (*HistoryData, error) {
 	return data, scanner.Err()
 }
 
+// parseCommand parses a command line into a Command struct
 func parseCommand(line string, shell string) *Command {
 	if len(line) == 0 {
 		return nil
@@ -147,7 +148,7 @@ func parseCommand(line string, shell string) *Command {
 		Raw: line,
 	}
 
-	// Try to parse ZSH extended history format
+	// try to parse ZSH extended history format
 	if shell == "zsh" {
 		if matches := zshExtendedRegex.FindStringSubmatch(line); matches != nil {
 			timestamp, err := strconv.ParseInt(matches[1], 10, 64)
@@ -160,13 +161,13 @@ func parseCommand(line string, shell string) *Command {
 		}
 	}
 
-	// Skip empty commands after parsing
+	// skip empty commands after parsing
 	line = strings.TrimSpace(line)
 	if len(line) == 0 {
 		return nil
 	}
 
-	// Parse the command and arguments
+	// parse the command and arguments
 	parts := parseCommandParts(line)
 	if len(parts) == 0 {
 		return nil
@@ -180,7 +181,7 @@ func parseCommand(line string, shell string) *Command {
 	return cmd
 }
 
-// parseCommandParts splits a command line into parts, respecting quotes
+// parseCommandParts splits a command line into parts, respecting double quotes
 func parseCommandParts(line string) []string {
 	var parts []string
 	var current strings.Builder
@@ -216,14 +217,14 @@ func parseCommandParts(line string) []string {
 	return parts
 }
 
-// GetBaseCommand extracts the base command, handling sudo, env vars, etc.
+// getBaseCommand extracts the base command, handling sudo, env vars, etc.
 func GetBaseCommand(cmd *Command) string {
 	command := cmd.Command
 
-	// Skip leading env var assignments (VAR=value cmd)
+	// skip leading env var assignments (VAR=value cmd)
 	if strings.Contains(command, "=") && len(cmd.Args) > 0 {
 		command = cmd.Args[0]
-		// Could be multiple env vars, keep going
+		// could be multiple env vars, keep going
 		for i := 1; i < len(cmd.Args); i++ {
 			if !strings.Contains(command, "=") {
 				break
@@ -232,10 +233,10 @@ func GetBaseCommand(cmd *Command) string {
 		}
 	}
 
-	// Handle sudo/doas
+	// handle sudo/doas
 	if command == "sudo" || command == "doas" {
 		if len(cmd.Args) > 0 {
-			// Skip flags like -u, -i, etc.
+			// skip flags like -u, -i, etc.
 			for _, arg := range cmd.Args {
 				if !strings.HasPrefix(arg, "-") && !strings.Contains(arg, "=") {
 					return arg
@@ -244,7 +245,7 @@ func GetBaseCommand(cmd *Command) string {
 		}
 	}
 
-	// Handle common wrappers
+	// handle common wrappers
 	wrappers := []string{"time", "nice", "nohup", "strace", "ltrace"}
 	for _, wrapper := range wrappers {
 		if command == wrapper && len(cmd.Args) > 0 {
