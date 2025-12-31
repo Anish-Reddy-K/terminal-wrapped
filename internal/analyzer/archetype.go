@@ -1,14 +1,14 @@
 package analyzer
 
-// Archetype represents a developer personality type
+// archetype represents a developer personality type
 type Archetype struct {
 	Name    string
 	Icon    string
 	Tagline string
-	Score   float64 // Higher = stronger match
+	Score   float64 // higher = stronger match
 }
 
-// All available archetypes
+// all available archetypes
 var archetypes = []struct {
 	Name    string
 	Icon    string
@@ -159,7 +159,7 @@ var archetypes = []struct {
 	},
 }
 
-// DetectArchetype finds the best matching archetype for the user
+// detectArchetype finds the best matching archetype for the user
 func DetectArchetype(stats *Stats) *Archetype {
 	var bestArchetype *Archetype
 	var bestScore float64
@@ -177,7 +177,7 @@ func DetectArchetype(stats *Stats) *Archetype {
 		}
 	}
 
-	// Default fallback
+	// default fallback
 	if bestArchetype == nil || bestScore < 1 {
 		return &Archetype{
 			Name:    "THE TERMINAL WARRIOR",
@@ -190,7 +190,7 @@ func DetectArchetype(stats *Stats) *Archetype {
 	return bestArchetype
 }
 
-// GetSecondaryArchetypes returns other notable archetypes
+// getSecondaryArchetypes returns other notable archetypes
 func GetSecondaryArchetypes(stats *Stats, primary *Archetype) []*Archetype {
 	var secondary []*Archetype
 

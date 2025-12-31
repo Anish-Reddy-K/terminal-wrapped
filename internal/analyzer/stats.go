@@ -8,39 +8,39 @@ import (
 	"github.com/Anish-Reddy-K/terminal-wrapped/internal/parser"
 )
 
-// Stats contains all computed statistics
+// stats contains all computed statistics
 type Stats struct {
-	// Basic counts
+	// basic counts
 	TotalCommands  int
 	UniqueCommands int
 
-	// Time-based stats (only if timestamps available)
+	// time-based stats (only if timestamps available)
 	HasTimeData    bool
 	FirstCommand   time.Time
 	LastCommand    time.Time
 	HistorySpan    time.Duration
 	CommandsPerDay float64
-	LongestStreak  int // consecutive days
+	LongestStreak  int // consecutive days with commands
 	BusiestDay     time.Time
 	BusiestDayCount int
 
-	// Hour/Day heatmap [day][hour] = count (0=Sunday, 1=Monday, ...)
+	// hour/day heatmap [day][hour] = count (0=Sunday, 1=Monday, ...)
 	HeatMap [7][24]int
 
-	// Peak time
+	// peak time
 	PeakHour    int
 	PeakDay     int // 0=Sunday
-	NightOwlPct float64 // % of commands after midnight (0-5am)
-	WeekendPct  float64 // % on Saturday/Sunday
+	NightOwlPct float64 // percentage of commands after midnight (0-5am)
+	WeekendPct  float64 // percentage on Saturday/Sunday
 
-	// Top commands
+	// top commands
 	TopCommands []CommandCount
 	
-	// Category breakdown
+	// category breakdown
 	Categories map[string]int
 	CategoryPct map[string]float64
 
-	// Command analysis
+	// command analysis
 	SudoCount       int
 	SudoPct         float64
 	PipeCount       int
@@ -49,7 +49,7 @@ type Stats struct {
 	LongestCommand  string
 	LongestCmdLen   int
 
-	// Fun facts
+	// fun facts
 	MostRepeated      string
 	MostRepeatedCount int
 	FavoriteDir       string
@@ -58,13 +58,13 @@ type Stats struct {
 	EditorCount       int
 }
 
-// CommandCount holds a command and its count
+// commandCount holds a command and its count
 type CommandCount struct {
 	Command string
 	Count   int
 }
 
-// Category definitions
+// category definitions
 var categoryCommands = map[string][]string{
 	"Git":        {"git", "gh", "hub", "tig", "lazygit", "gitui"},
 	"Containers": {"docker", "podman", "kubectl", "k9s", "helm", "docker-compose", "minikube", "kind"},
@@ -76,7 +76,7 @@ var categoryCommands = map[string][]string{
 	"Files":      {"cat", "less", "head", "tail", "rm", "cp", "mv", "mkdir", "touch", "chmod", "chown", "ln", "bat"},
 }
 
-// Analyze computes all statistics from history data
+// analyze computes all statistics from history data
 func Analyze(data *parser.HistoryData) *Stats {
 	stats := &Stats{
 		TotalCommands: len(data.Commands),
@@ -89,31 +89,31 @@ func Analyze(data *parser.HistoryData) *Stats {
 		return stats
 	}
 
-	// Count commands
+	// count commands
 	commandCounts := make(map[string]int)
-	// Track consecutive repeats
+	// track consecutive repeats
 	consecutiveRepeats := make(map[string]int)
 	lastCmd := ""
 	currentRepeat := 0
 
-	// Track directories
+	// track directories
 	dirCounts := make(map[string]int)
 	
-	// Track editors
+	// track editors
 	editorCounts := make(map[string]int)
 	editors := map[string]bool{"vim": true, "nvim": true, "nano": true, "emacs": true, "code": true, "cursor": true, "subl": true, "micro": true, "hx": true, "helix": true}
 
-	// Track days for streak calculation
+	// track days for streak calculation
 	activeDays := make(map[string]bool)
 
-	// Total command length for average
+	// total command length for average
 	totalCmdLen := 0
 
 	for _, cmd := range data.Commands {
 		baseCmd := parser.GetBaseCommand(&cmd)
 		commandCounts[baseCmd]++
 
-		// Track raw command length (use parsed command, not raw with timestamp)
+		// track raw command length (use parsed command, not raw with timestamp)
 		cmdStr := cmd.Raw
 		totalCmdLen += len(cmdStr)
 		if len(cmdStr) > stats.LongestCmdLen {
@@ -121,7 +121,7 @@ func Analyze(data *parser.HistoryData) *Stats {
 			stats.LongestCommand = cmdStr
 		}
 
-		// Track consecutive repeats
+		// track consecutive repeats
 		if cmd.Raw == lastCmd {
 			currentRepeat++
 		} else {
@@ -134,32 +134,32 @@ func Analyze(data *parser.HistoryData) *Stats {
 		lastCmd = cmd.Raw
 		consecutiveRepeats[cmd.Raw] = max(consecutiveRepeats[cmd.Raw], currentRepeat)
 
-		// Track sudo
+		// track sudo
 		if cmd.Command == "sudo" || cmd.Command == "doas" {
 			stats.SudoCount++
 		}
 
-		// Track pipes
+		// track pipes
 		if strings.Contains(cmd.Raw, "|") {
 			stats.PipeCount++
 		}
 
-		// Track directories (cd commands)
+		// track directories (cd commands)
 		if baseCmd == "cd" && len(cmd.Args) > 0 {
 			dir := cmd.Args[0]
-			// Normalize some common patterns
+			// normalize some common patterns
 			if strings.HasPrefix(dir, "~/") || dir == "~" {
 				dir = "~" + dir[1:]
 			}
 			dirCounts[dir]++
 		}
 
-		// Track editors
+		// track editors
 		if editors[baseCmd] {
 			editorCounts[baseCmd]++
 		}
 
-		// Categorize
+		// categorize
 		for category, commands := range categoryCommands {
 			for _, c := range commands {
 				if baseCmd == c {
@@ -169,7 +169,7 @@ func Analyze(data *parser.HistoryData) *Stats {
 			}
 		}
 
-		// Time-based analysis
+		// time-based analysis
 		if cmd.HasTime {
 			if stats.FirstCommand.IsZero() || cmd.Timestamp.Before(stats.FirstCommand) {
 				stats.FirstCommand = cmd.Timestamp
@@ -178,37 +178,37 @@ func Analyze(data *parser.HistoryData) *Stats {
 				stats.LastCommand = cmd.Timestamp
 			}
 
-			// Track active days for streak
+			// track active days for streak
 			dayKey := cmd.Timestamp.Format("2006-01-02")
 			activeDays[dayKey] = true
 
-			// Heatmap
+			// heatmap
 			hour := cmd.Timestamp.Hour()
 			day := int(cmd.Timestamp.Weekday())
 			stats.HeatMap[day][hour]++
 
-			// Night owl (midnight to 5am)
+			// night owl (midnight to 5am)
 			if hour >= 0 && hour < 5 {
 				stats.NightOwlPct++
 			}
 
-			// Weekend
+			// weekend
 			if day == 0 || day == 6 {
 				stats.WeekendPct++
 			}
 		}
 	}
 
-	// Check last repeat
+	// check last repeat
 	if currentRepeat > stats.MostRepeatedCount {
 		stats.MostRepeatedCount = currentRepeat
 		stats.MostRepeated = lastCmd
 	}
 
-	// Unique commands
+	// unique commands
 	stats.UniqueCommands = len(commandCounts)
 
-	// Calculate percentages
+	// calculate percentages
 	total := float64(stats.TotalCommands)
 	stats.SudoPct = float64(stats.SudoCount) / total * 100
 	stats.PipePct = float64(stats.PipeCount) / total * 100
@@ -225,15 +225,15 @@ func Analyze(data *parser.HistoryData) *Stats {
 		}
 	}
 
-	// Top commands
+	// top commands
 	stats.TopCommands = topN(commandCounts, 10)
 
-	// Category percentages
+	// category percentages
 	for cat, count := range stats.Categories {
 		stats.CategoryPct[cat] = float64(count) / total * 100
 	}
 
-	// Find peak hour/day
+	// find peak hour/day
 	maxHeatmap := 0
 	for day := 0; day < 7; day++ {
 		for hour := 0; hour < 24; hour++ {
@@ -245,12 +245,12 @@ func Analyze(data *parser.HistoryData) *Stats {
 		}
 	}
 
-	// Longest streak
+	// longest streak
 	if len(activeDays) > 0 {
 		stats.LongestStreak, stats.BusiestDay, stats.BusiestDayCount = calculateStreak(activeDays, data.Commands)
 	}
 
-	// Favorite directory
+	// favorite directory
 	maxDir := 0
 	for dir, count := range dirCounts {
 		if count > maxDir {
@@ -260,7 +260,7 @@ func Analyze(data *parser.HistoryData) *Stats {
 		}
 	}
 
-	// Editor choice
+	// editor choice
 	maxEditor := 0
 	for editor, count := range editorCounts {
 		if count > maxEditor {
@@ -294,7 +294,7 @@ func calculateStreak(activeDays map[string]bool, commands []parser.Command) (lon
 		return 0, time.Time{}, 0
 	}
 
-	// Count commands per day
+	// count commands per day
 	dayCounts := make(map[string]int)
 	for _, cmd := range commands {
 		if cmd.HasTime {
@@ -303,7 +303,7 @@ func calculateStreak(activeDays map[string]bool, commands []parser.Command) (lon
 		}
 	}
 
-	// Find busiest day
+	// find busiest day
 	for dayStr, count := range dayCounts {
 		if count > busiestCount {
 			busiestCount = count
@@ -311,14 +311,14 @@ func calculateStreak(activeDays map[string]bool, commands []parser.Command) (lon
 		}
 	}
 
-	// Sort days
+	// sort days
 	days := make([]string, 0, len(activeDays))
 	for day := range activeDays {
 		days = append(days, day)
 	}
 	sort.Strings(days)
 
-	// Calculate streak
+	// calculate streak
 	currentStreak := 1
 	for i := 1; i < len(days); i++ {
 		prevDay, _ := time.Parse("2006-01-02", days[i-1])
@@ -341,7 +341,7 @@ func calculateStreak(activeDays map[string]bool, commands []parser.Command) (lon
 	return longestStreak, busiestDay, busiestCount
 }
 
-// GetSudoLevel returns a fun label for sudo usage
+// getSudoLevel returns a fun label for sudo usage
 func GetSudoLevel(pct float64) string {
 	switch {
 	case pct < 1:
@@ -357,7 +357,7 @@ func GetSudoLevel(pct float64) string {
 	}
 }
 
-// GetDayName returns the day name from weekday int
+// getDayName returns the day name from weekday int
 func GetDayName(day int) string {
 	days := []string{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}
 	if day >= 0 && day < 7 {
@@ -366,7 +366,7 @@ func GetDayName(day int) string {
 	return "Unknown"
 }
 
-// FormatDuration formats a duration nicely
+// formatDuration formats a duration nicely
 func FormatDuration(d time.Duration) string {
 	days := int(d.Hours() / 24)
 	years := days / 365
