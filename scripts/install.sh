@@ -88,7 +88,7 @@ main() {
     chmod +x "$TMP_BINARY"
 
     # run it!
-    echo -e "${GREEN}✨ Running terminal-wrapped...${NC}\n"
+    echo -e "${GREEN}Running terminal-wrapped...${NC}\n"
     "$TMP_BINARY" "$@"
 }
 
