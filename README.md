@@ -2,7 +2,7 @@
 
 Your "Spotify Wrapped" for the command line. See your developer stats in a beautiful, screenshot-ready report.
 
-<img width="850" height="1119" alt="Screenshot 2025-12-31 at 12 53 55 AM" src="https://github.com/user-attachments/assets/d7340901-ca6f-45b6-a113-98f054702990" />
+<img width="510" height="671" alt="terminal-wrapped" src="https://github.com/user-attachments/assets/d7340901-ca6f-45b6-a113-98f054702990" />
 
 ## Quick Start
 
