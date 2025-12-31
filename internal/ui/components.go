@@ -207,11 +207,12 @@ func TruncateString(s string, maxLen int) string {
 
 // CenterText centers text within a given width
 func CenterText(s string, width int) string {
-	if len(s) >= width {
+	visibleWidth := lipgloss.Width(s)
+	if visibleWidth >= width {
 		return s
 	}
-	padding := (width - len(s)) / 2
-	return strings.Repeat(" ", padding) + s + strings.Repeat(" ", width-len(s)-padding)
+	padding := (width - visibleWidth) / 2
+	return strings.Repeat(" ", padding) + s + strings.Repeat(" ", width-visibleWidth-padding)
 }
 
 // RightAlign right-aligns text within a given width

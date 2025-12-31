@@ -82,6 +82,7 @@ func RenderHistoryTip() string {
 
 	tipIcon := AccentStyle.Render("[i]")
 	tipText := LabelStyle.Render(" Save more history: ")
+	
 	code := lipgloss.NewStyle().Foreground(ColorGreen).Render(
 		"echo 'HISTSIZE=100000' >> ~/.zshrc && exec zsh")
 
