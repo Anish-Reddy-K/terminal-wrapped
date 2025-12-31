@@ -2,8 +2,6 @@
 
 Your "Spotify Wrapped" for the command line. See your developer stats in a beautiful, screenshot-ready report.
 
-<img width="510" height="671" alt="terminal-wrapped" src="https://github.com/user-attachments/assets/d7340901-ca6f-45b6-a113-98f054702990" />
-
 ## Quick Start
 
 Run instantly - no installation required:
@@ -13,6 +11,8 @@ curl -fsSL arkr.ca/terminal-wrapped | bash
 ```
 
 That's it. It auto-detects your shell and history file.
+
+<img width="510" height="671" alt="terminal-wrapped" src="https://github.com/user-attachments/assets/d7340901-ca6f-45b6-a113-98f054702990" />
 
 ## What You Get
 
