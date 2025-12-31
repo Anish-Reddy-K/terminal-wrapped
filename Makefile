@@ -1,5 +1,5 @@
-# Terminal Wrapped - Makefile
-# Build cross-platform binaries for distribution
+# terminal-wrapped - makefile
+# build cross-platform binaries for distribution
 
 BINARY_NAME=terminal-wrapped
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -8,7 +8,7 @@ DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
 
-# Build targets
+# build targets
 .PHONY: all build clean release install test
 
 all: build
@@ -16,50 +16,50 @@ all: build
 build:
 	go build $(LDFLAGS) -o $(BINARY_NAME) .
 
-# Development build with race detector
+# development build with race detector
 dev:
 	go build -race -o $(BINARY_NAME) .
 
-# Run the binary
+# run the binary
 run: build
 	./$(BINARY_NAME)
 
-# Run tests
+# run tests
 test:
 	go test -v ./...
 
-# Clean build artifacts
+# clean build artifacts
 clean:
 	rm -f $(BINARY_NAME)
 	rm -rf dist/
 
-# Install locally
+# install locally
 install: build
 	cp $(BINARY_NAME) /usr/local/bin/
 
-# Create release binaries for all platforms
+# create release binaries for all platforms
 release: clean
 	mkdir -p dist
 	
-	@echo "Building darwin-amd64..."
+	@echo "building darwin-amd64..."
 	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o dist/$(BINARY_NAME)-darwin-amd64 .
 	
-	@echo "Building darwin-arm64..."
+	@echo "building darwin-arm64..."
 	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o dist/$(BINARY_NAME)-darwin-arm64 .
 	
-	@echo "Building linux-amd64..."
+	@echo "building linux-amd64..."
 	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o dist/$(BINARY_NAME)-linux-amd64 .
 	
-	@echo "Building linux-arm64..."
+	@echo "building linux-arm64..."
 	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o dist/$(BINARY_NAME)-linux-arm64 .
 	
-	@echo "Creating checksums..."
+	@echo "creating checksums..."
 	cd dist && shasum -a 256 * > checksums.txt
 	
-	@echo "Release binaries created in dist/"
+	@echo "release binaries created in dist/"
 	@ls -lah dist/
 
-# Compress release binaries
+# compress release binaries
 compress: release
 	cd dist && \
 	for f in $(BINARY_NAME)-*; do \
@@ -70,21 +70,21 @@ compress: release
 	@echo "Compressed binaries created"
 	@ls -lah dist/
 
-# Show binary size
+# show binary size
 size: build
 	@ls -lh $(BINARY_NAME)
 	@echo ""
 	@file $(BINARY_NAME)
 
-# Format code
+# format code
 fmt:
 	go fmt ./...
 
-# Lint code
+# lint code
 lint:
 	go vet ./...
 
-# Update dependencies
+# update dependencies
 deps:
 	go mod tidy
 	go mod verify
