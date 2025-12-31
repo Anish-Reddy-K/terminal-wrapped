@@ -1,4 +1,4 @@
-module github.com/anishreddy/terminal-wrapped
+module github.com/Anish-Reddy-K/terminal-wrapped
 
 go 1.25.4
 

@@ -7,7 +7,15 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/anishreddy/terminal-wrapped/internal/analyzer"
+	"github.com/Anish-Reddy-K/terminal-wrapped/internal/analyzer"
+)
+
+const (
+	// Fixed widths for consistent layout
+	TotalWidth    = 76
+	LeftColWidth  = 36
+	RightColWidth = 36
+	ColGap        = 2
 )
 
 // Render produces the complete terminal output
@@ -19,22 +27,24 @@ func Render(stats *analyzer.Stats, archetype *analyzer.Archetype) string {
 	sb.WriteString(RenderHeader())
 	sb.WriteString("\n\n")
 
-	// Hero section: Total commands + Archetype (side by side)
+	// Hero section: Total commands + Archetype (side by side, same height)
 	heroLeft := renderHeroStats(stats)
 	heroRight := renderArchetype(archetype)
-	sb.WriteString("  ")
-	sb.WriteString(JoinHorizontal(2, heroLeft, heroRight))
+	
+	// Ensure same height
+	heroLeftStyled := lipgloss.NewStyle().Height(8).Render(heroLeft)
+	heroRightStyled := lipgloss.NewStyle().Height(8).Render(heroRight)
+	sb.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, heroLeftStyled, "  ", heroRightStyled))
 	sb.WriteString("\n\n")
 
 	// Quick stats row
 	sb.WriteString(renderQuickStats(stats))
 	sb.WriteString("\n\n")
 
-	// Middle section: Top commands + Category mix + Heatmap
+	// Middle section: Top commands + Right panel (aligned heights)
 	topCmds := renderTopCommands(stats)
 	rightPanel := renderRightPanel(stats)
-	sb.WriteString("  ")
-	sb.WriteString(JoinHorizontal(2, topCmds, rightPanel))
+	sb.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, topCmds, "  ", rightPanel))
 	sb.WriteString("\n\n")
 
 	// Fun facts row
@@ -42,7 +52,6 @@ func Render(stats *analyzer.Stats, archetype *analyzer.Archetype) string {
 	sb.WriteString("\n\n")
 
 	// History tip
-	sb.WriteString("  ")
 	sb.WriteString(RenderHistoryTip())
 	sb.WriteString("\n\n")
 
@@ -54,120 +63,122 @@ func Render(stats *analyzer.Stats, archetype *analyzer.Archetype) string {
 }
 
 func renderHeroStats(stats *analyzer.Stats) string {
-	style := BoxStyle.Copy().
-		Width(37).
-		Height(6).
-		BorderForeground(ColorPrimary)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorPrimary).
+		Padding(0, 1).
+		Width(LeftColWidth).
+		Height(6)
 
-	bigNumber := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(ColorAccent)
+	numberStyle := lipgloss.NewStyle().Bold(true).Foreground(ColorAccent)
+	
+	var lines []string
+	lines = append(lines, LabelStyle.Render(" TOTAL COMMANDS"))
+	lines = append(lines, "")
+	lines = append(lines, numberStyle.Render(fmt.Sprintf(" [#] %s", FormatNumber(stats.TotalCommands))))
+	lines = append(lines, SubtleStyle.Render("     "+strings.Repeat("-", 26)))
 
-	var content strings.Builder
-
-	// Big number
-	content.WriteString(bigNumber.Render(fmt.Sprintf("  ██  %s COMMANDS", FormatNumber(stats.TotalCommands))))
-	content.WriteString("\n")
-	content.WriteString(SubtleStyle.Render("      " + strings.Repeat("━", 28)))
-	content.WriteString("\n")
-
-	// Time span
 	if stats.HasTimeData && !stats.FirstCommand.IsZero() {
-		span := fmt.Sprintf("  %s → %s (%s)",
+		span := fmt.Sprintf(" %s -> %s (%s)",
 			stats.FirstCommand.Format("Jan 2006"),
 			stats.LastCommand.Format("Jan 2006"),
 			analyzer.FormatDuration(stats.HistorySpan))
-		content.WriteString(LabelStyle.Render(span))
-		content.WriteString("\n")
-
-		perDay := fmt.Sprintf("  ~%.0f commands/day", stats.CommandsPerDay)
-		content.WriteString(LabelStyle.Render(perDay))
+		lines = append(lines, LabelStyle.Render(span))
+		lines = append(lines, LabelStyle.Render(fmt.Sprintf(" ~%.0f commands/day", stats.CommandsPerDay)))
 	} else {
-		content.WriteString(LabelStyle.Render("  All-time history"))
-		content.WriteString("\n")
-		content.WriteString(SubtleStyle.Render("  (no timestamps available)"))
+		lines = append(lines, LabelStyle.Render(" All-time history"))
+		lines = append(lines, SubtleStyle.Render(" (no timestamps)"))
 	}
 
-	return style.Render(content.String())
+	return style.Render(strings.Join(lines, "\n"))
 }
 
 func renderArchetype(arch *analyzer.Archetype) string {
-	style := HighlightBoxStyle.Copy().
-		Width(37).
-		Height(6).
-		BorderForeground(ColorPurple)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorPurple).
+		Padding(0, 1).
+		Width(RightColWidth).
+		Height(6)
 
-	titleStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(ColorBright)
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(ColorBright)
+	taglineStyle := lipgloss.NewStyle().Foreground(ColorMuted).Italic(true)
 
-	emojiStyle := lipgloss.NewStyle().
-		Foreground(ColorAccent)
+	// Wrap tagline if needed (max ~28 chars per line)
+	tagline := arch.Tagline
+	tagline1 := tagline
+	tagline2 := ""
+	if len(tagline) > 28 {
+		breakPoint := 28
+		for i := 28; i > 15; i-- {
+			if tagline[i] == ' ' {
+				breakPoint = i
+				break
+			}
+		}
+		tagline1 = tagline[:breakPoint]
+		tagline2 = tagline[breakPoint+1:]
+	}
 
-	taglineStyle := lipgloss.NewStyle().
-		Foreground(ColorMuted).
-		Italic(true)
+	var lines []string
+	lines = append(lines, LabelStyle.Render(" YOUR ARCHETYPE"))
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf(" %s  %s", AccentStyle.Render(arch.Icon), titleStyle.Render(arch.Name)))
+	if tagline2 != "" {
+		lines = append(lines, taglineStyle.Render(fmt.Sprintf(" \"%s", tagline1)))
+		lines = append(lines, taglineStyle.Render(fmt.Sprintf("  %s\"", tagline2)))
+	} else {
+		lines = append(lines, taglineStyle.Render(fmt.Sprintf(" \"%s\"", tagline1)))
+	}
 
-	var content strings.Builder
-	content.WriteString(LabelStyle.Render("  YOUR ARCHETYPE"))
-	content.WriteString("\n\n")
-	content.WriteString(emojiStyle.Render("   " + arch.Emoji + "  "))
-	content.WriteString(titleStyle.Render(arch.Name))
-	content.WriteString("\n")
-	content.WriteString(taglineStyle.Render("   \"" + arch.Tagline + "\""))
-
-	return style.Render(content.String())
+	return style.Render(strings.Join(lines, "\n"))
 }
 
 func renderQuickStats(stats *analyzer.Stats) string {
-	style := BoxStyle.Copy().
-		Width(76)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorDim).
+		Padding(0, 1).
+		Width(TotalWidth)
 
-	// Create stat items
+	headerStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
+
+	// Fixed-width columns for alignment
+	colWidth := 14
+
+	// Create stat items with fixed widths
 	items := []struct {
 		label string
 		value string
 	}{
 		{"Unique Cmds", FormatNumber(stats.UniqueCommands)},
-		{"Longest Streak", fmt.Sprintf("%d days", stats.LongestStreak)},
-		{"Busiest Day", formatBusiestDay(stats)},
-		{"sudo Level", fmt.Sprintf("%d %s", stats.SudoCount, sudoMeter(stats.SudoPct))},
-		{"Pipes Used", FormatNumber(stats.PipeCount)},
+		{"Streak", fmt.Sprintf("%d days", stats.LongestStreak)},
+		{"Busiest", formatBusiestDay(stats)},
+		{"sudo", sudoMeter(stats.SudoCount)},
+		{"Pipes", FormatNumber(stats.PipeCount)},
 	}
 
-	headerStyle := lipgloss.NewStyle().
-		Foreground(ColorSecondary).
-		Bold(true)
+	header := headerStyle.Render("-- QUICK STATS ") + SubtleStyle.Render(strings.Repeat("-", 57))
 
-	var header strings.Builder
-	header.WriteString(headerStyle.Render("─ QUICK STATS "))
-	header.WriteString(SubtleStyle.Render(strings.Repeat("─", 60)))
+	// Build columns with fixed width
+	var labelRow strings.Builder
+	var valueRow strings.Builder
 
-	var values strings.Builder
-	for i, item := range items {
-		labelStyle := LabelStyle
-		valueStyle := ValueStyle
-
-		values.WriteString("  ")
-		values.WriteString(labelStyle.Render(item.label))
-		values.WriteString("\n  ")
-		values.WriteString(valueStyle.Render(item.value))
-
-		if i < len(items)-1 {
-			values.WriteString("         ")
-		}
+	for _, item := range items {
+		labelRow.WriteString(padRight(LabelStyle.Render(item.label), colWidth))
+		valueRow.WriteString(padRight(ValueStyle.Render(item.value), colWidth))
 	}
 
-	// Arrange horizontally
-	cols := make([]string, len(items))
-	for i, item := range items {
-		cols[i] = fmt.Sprintf("%s\n%s",
-			LabelStyle.Render(item.label),
-			ValueStyle.Render(item.value))
-	}
+	content := header + "\n" + labelRow.String() + "\n" + valueRow.String()
+	return style.Render(content)
+}
 
-	content := "  " + JoinHorizontal(4, cols...)
-	return style.Render(header.String() + "\n" + content)
+func padRight(s string, width int) string {
+	visibleLen := lipgloss.Width(s)
+	if visibleLen >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-visibleLen)
 }
 
 func formatBusiestDay(stats *analyzer.Stats) string {
@@ -177,26 +188,47 @@ func formatBusiestDay(stats *analyzer.Stats) string {
 	return fmt.Sprintf("%s (%d)", stats.BusiestDay.Format("Jan 2"), stats.BusiestDayCount)
 }
 
-func sudoMeter(pct float64) string {
-	blocks := int(pct / 5)
-	if blocks > 5 {
+func sudoMeter(count int) string {
+	// Scale based on count, not percentage
+	var level string
+	var blocks int
+	switch {
+	case count == 0:
+		level = "none"
+		blocks = 0
+	case count < 10:
+		level = "low"
+		blocks = 1
+	case count < 50:
+		level = "med"
+		blocks = 2
+	case count < 100:
+		level = "high"
+		blocks = 3
+	case count < 500:
+		level = "power"
+		blocks = 4
+	default:
+		level = "god"
 		blocks = 5
 	}
-	return strings.Repeat("█", blocks) + strings.Repeat("░", 5-blocks)
+	filled := lipgloss.NewStyle().Foreground(ColorPrimary).Render(strings.Repeat("#", blocks))
+	empty := SubtleStyle.Render(strings.Repeat("-", 5-blocks))
+	return "[" + filled + empty + "] " + level
 }
 
 func renderTopCommands(stats *analyzer.Stats) string {
-	style := BoxStyle.Copy().
-		Width(38)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorDim).
+		Padding(0, 1).
+		Width(LeftColWidth).
+		Height(11)
 
-	headerStyle := lipgloss.NewStyle().
-		Foreground(ColorSecondary).
-		Bold(true)
+	headerStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
 
-	var content strings.Builder
-	content.WriteString(headerStyle.Render("─ TOP COMMANDS "))
-	content.WriteString(SubtleStyle.Render(strings.Repeat("─", 21)))
-	content.WriteString("\n")
+	var lines []string
+	lines = append(lines, headerStyle.Render("-- TOP COMMANDS ")+SubtleStyle.Render(strings.Repeat("-", 17)))
 
 	maxCount := 0
 	if len(stats.TopCommands) > 0 {
@@ -209,23 +241,18 @@ func renderTopCommands(stats *analyzer.Stats) string {
 			break
 		}
 
-		numStyle := SubtleStyle
-		cmdStyle := ValueStyle
-		countStyle := LabelStyle
+		num := SubtleStyle.Render(fmt.Sprintf("%d.", i+1))
+		name := ValueStyle.Render(padRight(cmd.Command, 8))
+		bar := ProgressBar(cmd.Count, maxCount, 14, getCmdColor(cmd.Command))
+		count := LabelStyle.Render(fmt.Sprintf("%5s", FormatNumber(cmd.Count)))
 
-		bar := ProgressBar(cmd.Count, maxCount, 18, getCmdColor(cmd.Command))
-		content.WriteString(fmt.Sprintf(" %s %-7s %s %s\n",
-			numStyle.Render(fmt.Sprintf("%d.", i+1)),
-			cmdStyle.Render(TruncateString(cmd.Command, 7)),
-			bar,
-			countStyle.Render(FormatNumber(cmd.Count))))
+		lines = append(lines, fmt.Sprintf("%s %s%s %s", num, name, bar, count))
 	}
 
-	return style.Render(content.String())
+	return style.Render(strings.Join(lines, "\n"))
 }
 
 func getCmdColor(cmd string) lipgloss.Color {
-	// Assign colors based on category
 	switch cmd {
 	case "git", "gh", "hub":
 		return ColorOrange
@@ -245,25 +272,22 @@ func getCmdColor(cmd string) lipgloss.Color {
 }
 
 func renderRightPanel(stats *analyzer.Stats) string {
-	// Category mix + Heatmap stacked
 	catMix := renderCategoryMix(stats)
 	heatmap := renderHeatmapSection(stats)
-
-	return catMix + "\n" + heatmap
+	return lipgloss.JoinVertical(lipgloss.Left, catMix, heatmap)
 }
 
 func renderCategoryMix(stats *analyzer.Stats) string {
-	style := BoxStyle.Copy().
-		Width(35)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorDim).
+		Padding(0, 1).
+		Width(RightColWidth)
 
-	headerStyle := lipgloss.NewStyle().
-		Foreground(ColorSecondary).
-		Bold(true)
+	headerStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
 
-	var content strings.Builder
-	content.WriteString(headerStyle.Render("─ CATEGORY MIX "))
-	content.WriteString(SubtleStyle.Render(strings.Repeat("─", 18)))
-	content.WriteString("\n")
+	var lines []string
+	lines = append(lines, headerStyle.Render("-- CATEGORIES ")+SubtleStyle.Render(strings.Repeat("-", 19)))
 
 	// Sort categories by usage
 	type catItem struct {
@@ -279,136 +303,128 @@ func renderCategoryMix(stats *analyzer.Stats) string {
 	})
 
 	// Display in 2 columns, up to 8 categories
-	row1 := make([]string, 0, 4)
-	row2 := make([]string, 0, 4)
+	for i := 0; i < len(cats) && i < 8; i += 2 {
+		cat1 := cats[i]
+		color1 := CategoryColors[cat1.name]
+		if color1 == "" {
+			color1 = ColorMuted
+		}
 
-	for i, cat := range cats {
-		if i >= 8 {
-			break
-		}
-		color := CategoryColors[cat.name]
-		if color == "" {
-			color = ColorMuted
-		}
-		item := fmt.Sprintf("%s %s %.0f%%",
-			MiniBar(cat.pct, color),
-			lipgloss.NewStyle().Foreground(color).Render(TruncateString(cat.name, 6)),
-			cat.pct)
+		// Fixed width columns: bar(4) + space + name(7) + space + pct(3) = 16
+		col1 := fmt.Sprintf("%s %-7s%3.0f%%",
+			MiniBar(cat1.pct, color1),
+			TruncateString(cat1.name, 7),
+			cat1.pct)
 
-		if i%2 == 0 {
-			row1 = append(row1, item)
-		} else {
-			row2 = append(row2, item)
+		col2 := ""
+		if i+1 < len(cats) {
+			cat2 := cats[i+1]
+			color2 := CategoryColors[cat2.name]
+			if color2 == "" {
+				color2 = ColorMuted
+			}
+			col2 = fmt.Sprintf("%s %-7s%3.0f%%",
+				MiniBar(cat2.pct, color2),
+				TruncateString(cat2.name, 7),
+				cat2.pct)
 		}
+
+		lines = append(lines, padRight(col1, 16)+" "+col2)
 	}
 
-	for i := 0; i < len(row1); i++ {
-		content.WriteString(" ")
-		content.WriteString(row1[i])
-		if i < len(row2) {
-			content.WriteString("  ")
-			content.WriteString(row2[i])
-		}
-		content.WriteString("\n")
-	}
-
-	return style.Render(content.String())
+	return style.Render(strings.Join(lines, "\n"))
 }
 
 func renderHeatmapSection(stats *analyzer.Stats) string {
-	style := BoxStyle.Copy().
-		Width(35)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorDim).
+		Padding(0, 1).
+		Width(RightColWidth)
 
-	headerStyle := lipgloss.NewStyle().
-		Foreground(ColorSecondary).
-		Bold(true)
+	headerStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
 
-	var content strings.Builder
-	content.WriteString(headerStyle.Render("─ PEAK HOURS "))
-	content.WriteString(SubtleStyle.Render(strings.Repeat("─", 20)))
-	content.WriteString("\n")
+	var lines []string
+	lines = append(lines, headerStyle.Render("-- ACTIVITY ")+SubtleStyle.Render(strings.Repeat("-", 21)))
 
 	if stats.HasTimeData {
-		content.WriteString(Heatmap(stats.HeatMap))
+		heatmapStr := Heatmap(stats.HeatMap)
+		lines = append(lines, strings.Split(strings.TrimSuffix(heatmapStr, "\n"), "\n")...)
 
-		// Peak callout
 		peakStyle := lipgloss.NewStyle().Foreground(ColorAccent).Bold(true)
-		peak := fmt.Sprintf(" ⚡ Peak: %s %d:00-%d:00",
+		peak := fmt.Sprintf(">> Peak: %s %02d:00",
 			analyzer.GetDayName(stats.PeakDay),
-			stats.PeakHour,
-			(stats.PeakHour+1)%24)
-		content.WriteString(peakStyle.Render(peak))
+			stats.PeakHour)
+		lines = append(lines, peakStyle.Render(peak))
 	} else {
-		content.WriteString(SubtleStyle.Render("\n  No timestamp data available\n"))
-		content.WriteString(SubtleStyle.Render("  (enable EXTENDED_HISTORY in zsh)\n"))
+		lines = append(lines, "")
+		lines = append(lines, SubtleStyle.Render(" No timestamp data"))
+		lines = append(lines, SubtleStyle.Render(" Enable EXTENDED_HISTORY"))
+		lines = append(lines, "")
 	}
 
-	return style.Render(content.String())
+	return style.Render(strings.Join(lines, "\n"))
 }
 
 func renderFunFacts(stats *analyzer.Stats) string {
-	style := BoxStyle.Copy().
-		Width(76)
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorDim).
+		Padding(0, 1).
+		Width(TotalWidth)
 
-	headerStyle := lipgloss.NewStyle().
-		Foreground(ColorSecondary).
-		Bold(true)
+	headerStyle := lipgloss.NewStyle().Foreground(ColorSecondary).Bold(true)
 
-	var content strings.Builder
-	content.WriteString(headerStyle.Render("─ FUN FACTS "))
-	content.WriteString(SubtleStyle.Render(strings.Repeat("─", 62)))
-	content.WriteString("\n")
+	var lines []string
+	lines = append(lines, headerStyle.Render("-- INSIGHTS ")+SubtleStyle.Render(strings.Repeat("-", 61)))
 
-	facts := []string{}
+	// Collect facts as pairs for 2-column layout
+	type fact struct {
+		icon  string
+		label string
+		value string
+	}
+	var facts []fact
 
-	// Night owl
 	if stats.HasTimeData {
-		facts = append(facts, fmt.Sprintf("🦉 Night Owl: %.0f%% after midnight", stats.NightOwlPct))
-		facts = append(facts, fmt.Sprintf("📅 Weekend: %.0f%% on Sat/Sun", stats.WeekendPct))
+		facts = append(facts, fact{"(O)", "Night Owl", fmt.Sprintf("%.0f%% after midnight", stats.NightOwlPct)})
+		facts = append(facts, fact{"[S]", "Weekend", fmt.Sprintf("%.0f%% on Sat/Sun", stats.WeekendPct)})
 	}
 
-	// Home base
 	if stats.FavoriteDir != "" {
-		facts = append(facts, fmt.Sprintf("🏠 Home: %s", TruncateString(stats.FavoriteDir, 20)))
+		facts = append(facts, fact{"~/", "Home Dir", TruncateString(stats.FavoriteDir, 18)})
 	}
 
-	// Editor
 	if stats.EditorChoice != "" {
-		facts = append(facts, fmt.Sprintf("⌨️  Editor: %s (%s opens)", stats.EditorChoice, FormatNumber(stats.EditorCount)))
+		facts = append(facts, fact{":w", "Editor", fmt.Sprintf("%s (%s)", stats.EditorChoice, FormatNumber(stats.EditorCount))})
 	}
 
-	// Most repeated
-	if stats.MostRepeated != "" && stats.MostRepeatedCount > 2 {
-		facts = append(facts, fmt.Sprintf("🔁 Repeated: \"%s\" (%dx)", TruncateString(stats.MostRepeated, 15), stats.MostRepeatedCount))
+	facts = append(facts, fact{"##", "Avg Length", fmt.Sprintf("%.0f chars", stats.AvgCommandLen)})
+
+	if stats.PipeCount > 0 {
+		facts = append(facts, fact{"|>", "Complexity", fmt.Sprintf("%.1f%% use pipes", stats.PipePct)})
 	}
 
-	// Longest command (clean up any timestamp prefixes for display)
-	if stats.LongestCmdLen > 50 {
-		longestDisplay := stats.LongestCommand
-		// Skip display if it looks like raw zsh format
-		if len(longestDisplay) > 0 && longestDisplay[0] != ':' {
-			facts = append(facts, fmt.Sprintf("📏 Longest: \"%s\" (%d ch)", TruncateString(longestDisplay, 15), stats.LongestCmdLen))
-		}
-	}
-
-	// Average command length
-	facts = append(facts, fmt.Sprintf("📊 Avg length: %.0f chars", stats.AvgCommandLen))
-
-	// Display in 2 columns
+	// Render in 2 columns
+	colWidth := 36
 	for i := 0; i < len(facts); i += 2 {
-		content.WriteString(" ")
-		content.WriteString(LabelStyle.Render(facts[i]))
+		f1 := facts[i]
+		col1 := fmt.Sprintf("%s %-11s %s",
+			AccentStyle.Render(f1.icon),
+			LabelStyle.Render(f1.label+":"),
+			ValueStyle.Render(f1.value))
+
+		col2 := ""
 		if i+1 < len(facts) {
-			// Pad first column
-			padding := 38 - lipgloss.Width(facts[i])
-			if padding > 0 {
-				content.WriteString(strings.Repeat(" ", padding))
-			}
-			content.WriteString(LabelStyle.Render(facts[i+1]))
+			f2 := facts[i+1]
+			col2 = fmt.Sprintf("%s %-11s %s",
+				AccentStyle.Render(f2.icon),
+				LabelStyle.Render(f2.label+":"),
+				ValueStyle.Render(f2.value))
 		}
-		content.WriteString("\n")
+
+		lines = append(lines, padRight(col1, colWidth)+col2)
 	}
 
-	return style.Render(content.String())
+	return style.Render(strings.Join(lines, "\n"))
 }
-

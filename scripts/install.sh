@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Terminal Wrapped - Instant Developer Stats
-# Run via: curl -fsSL arkr.ca/wrapped | bash
+# Run via: curl -fsSL arkr.ca/terminal-wrapped | bash
 #
 # This script downloads and runs the terminal-wrapped binary
 # No installation required - just runs and displays your stats
@@ -16,7 +16,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO="anishreddy/terminal-wrapped"
+REPO="Anish-Reddy-K/terminal-wrapped"
 BINARY_NAME="terminal-wrapped"
 
 # Detect OS

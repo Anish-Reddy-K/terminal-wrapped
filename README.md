@@ -9,13 +9,13 @@ Your personal "Spotify Wrapped" for the command line. Parses your shell history 
 Run instantly with a single command - no installation required:
 
 ```bash
-curl -fsSL arkr.ca/wrapped | bash
+curl -fsSL arkr.ca/terminal-wrapped | bash
 ```
 
 Or if you prefer to build from source:
 
 ```bash
-go install github.com/anishreddy/terminal-wrapped@latest
+go install github.com/Anish-Reddy-K/terminal-wrapped@latest
 terminal-wrapped
 ```
 
@@ -97,7 +97,7 @@ HISTFILESIZE=50000
 ## Building from Source
 
 ```bash
-git clone https://github.com/anishreddy/terminal-wrapped.git
+git clone https://github.com/Anish-Reddy-K/terminal-wrapped.git
 cd terminal-wrapped
 make build
 ./terminal-wrapped

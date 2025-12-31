@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anishreddy/terminal-wrapped/internal/parser"
+	"github.com/Anish-Reddy-K/terminal-wrapped/internal/parser"
 )
 
 // Stats contains all computed statistics

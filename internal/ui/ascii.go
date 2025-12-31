@@ -6,91 +6,91 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// ASCII art for the header - compact but impactful
+// ASCII art for the header - clean and impactful
 const asciiArt = `
-▀█▀ █▀▀ █▀█ █▀▄▀█ █ █▄ █ ▄▀█ █       █ █ █ █▀█ ▄▀█ █▀█ █▀█ █▀▀ █▀▄
- █  ██▄ █▀▄ █ ▀ █ █ █ ▀█ █▀█ █▄▄     ▀▄▀▄▀ █▀▄ █▀█ █▀▀ █▀▀ ██▄ █▄▀`
+ _____                   _             _  __      __                              _ 
+|_   _|__ _ __ _ __ ___ (_)_ __   __ _| | \ \    / / __ __ _ _ __  _ __   ___  __| |
+  | |/ _ \ '__| '_ ' _ \| | '_ \ / _' | |  \ \/\/ / '__/ _' | '_ \| '_ \ / _ \/ _' |
+  | |  __/ |  | | | | | | | | | | (_| | |   \    /| | | (_| | |_) | |_) |  __/ (_| |
+  |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|_|    \/\/ |_|  \__,_| .__/| .__/ \___|\__,_|
+                                                            |_|   |_|              `
 
 // RenderHeader renders the colorful ASCII art header
 func RenderHeader() string {
-	lines := strings.Split(strings.TrimSpace(asciiArt), "\n")
+	lines := strings.Split(strings.TrimPrefix(asciiArt, "\n"), "\n")
 	var result strings.Builder
 
 	// Create gradient effect
 	colors := []lipgloss.Color{
-		ColorPrimary,  // Coral
-		ColorOrange,   // Orange
-		ColorAccent,   // Yellow
-		ColorGreen,    // Green
+		ColorPrimary,   // Coral
+		ColorOrange,    // Orange
+		ColorAccent,    // Yellow
+		ColorGreen,     // Green
 		ColorSecondary, // Teal
+		ColorBlue,      // Blue
 	}
 
-	// Top border
-	borderStyle := lipgloss.NewStyle().Foreground(ColorDim)
-	result.WriteString(borderStyle.Render("╔" + strings.Repeat("═", 78) + "╗"))
-	result.WriteString("\n")
-
 	for _, line := range lines {
-		result.WriteString(borderStyle.Render("║"))
-		result.WriteString(" ")
-
 		// Apply gradient to each character
 		runes := []rune(line)
 		for i, r := range runes {
-			colorIdx := i * len(colors) / len(runes)
+			if r == ' ' {
+				result.WriteRune(' ')
+				continue
+			}
+			colorIdx := i * len(colors) / max(len(runes), 1)
 			if colorIdx >= len(colors) {
 				colorIdx = len(colors) - 1
 			}
 			charStyle := lipgloss.NewStyle().Foreground(colors[colorIdx]).Bold(true)
 			result.WriteString(charStyle.Render(string(r)))
 		}
-
-		// Pad to 76 chars
-		padding := 76 - len(runes)
-		if padding > 0 {
-			result.WriteString(strings.Repeat(" ", padding))
-		}
-
-		result.WriteString(" ")
-		result.WriteString(borderStyle.Render("║"))
 		result.WriteString("\n")
 	}
 
-	// Bottom border
-	result.WriteString(borderStyle.Render("╚" + strings.Repeat("═", 78) + "╝"))
-
-	return result.String()
+	return strings.TrimSuffix(result.String(), "\n")
 }
 
-// RenderFooter renders the footer with sharing info
+// RenderFooter renders the footer with sharing info and branding
 func RenderFooter() string {
-	borderStyle := lipgloss.NewStyle().Foreground(ColorDim)
+	lineStyle := lipgloss.NewStyle().Foreground(ColorDim)
 	linkStyle := lipgloss.NewStyle().Foreground(ColorSecondary)
 	hashtagStyle := lipgloss.NewStyle().Foreground(ColorAccent).Bold(true)
+	brandStyle := lipgloss.NewStyle().Foreground(ColorMuted)
 
-	footer := borderStyle.Render("─") + " " +
-		linkStyle.Render("github.com/anishreddy/terminal-wrapped") +
-		SubtleStyle.Render("  •  ") +
-		SubtleStyle.Render("Share on X: ") +
-		hashtagStyle.Render("#TerminalWrapped") +
-		" " + borderStyle.Render("─")
+	line := lineStyle.Render(strings.Repeat("-", 76))
+	
+	// Line 1: GitHub link
+	link := linkStyle.Render("github.com/Anish-Reddy-K/terminal-wrapped")
+	line1 := CenterText(link, 76)
+	
+	// Line 2: Share + branding
+	share := SubtleStyle.Render("Share on X with ") + hashtagStyle.Render("#TerminalWrapped")
+	brand := brandStyle.Render("by Anish Reddy (arkr.ca)")
+	line2 := "  " + share + strings.Repeat(" ", 76-lipgloss.Width(share)-lipgloss.Width(brand)-4) + brand
 
-	return CenterText(footer, 80)
+	return line + "\n" + line1 + "\n" + line2
 }
 
 // RenderHistoryTip renders the tip about increasing history
 func RenderHistoryTip() string {
-	style := BoxStyle.Copy().
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
 		BorderForeground(ColorDim).
-		Width(78)
+		Padding(0, 1).
+		Width(76)
 
-	tipStyle := lipgloss.NewStyle().Foreground(ColorAccent)
-	codeStyle := lipgloss.NewStyle().Foreground(ColorGreen)
+	tipIcon := AccentStyle.Render("[i]")
+	tipText := LabelStyle.Render(" Save more history: ")
+	code := lipgloss.NewStyle().Foreground(ColorGreen).Render(
+		"echo 'HISTSIZE=100000' >> ~/.zshrc && exec zsh")
 
-	content := tipStyle.Render("💡 Tip: ") +
-		LabelStyle.Render("To store more history, add to your .zshrc: ") +
-		codeStyle.Render("HISTSIZE=50000 SAVEHIST=50000")
-
-	return style.Render(content)
+	return style.Render(tipIcon + tipText + code)
 }
 
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}

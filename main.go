@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/anishreddy/terminal-wrapped/internal/analyzer"
-	"github.com/anishreddy/terminal-wrapped/internal/parser"
-	"github.com/anishreddy/terminal-wrapped/internal/ui"
+	"github.com/Anish-Reddy-K/terminal-wrapped/internal/analyzer"
+	"github.com/Anish-Reddy-K/terminal-wrapped/internal/parser"
+	"github.com/Anish-Reddy-K/terminal-wrapped/internal/ui"
 	"github.com/muesli/termenv"
 )
 

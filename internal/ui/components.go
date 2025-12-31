@@ -116,19 +116,19 @@ func MiniBar(pct float64, color lipgloss.Color) string {
 	return filledStyle.Render(strings.Repeat("█", blocks)) + emptyStyle.Render(strings.Repeat("░", 4-blocks))
 }
 
-// Heatmap creates a 7x8 heatmap (7 days, 8 time blocks of 3 hours each)
+// Heatmap creates a 7x6 compact heatmap (7 days, 6 time blocks of 4 hours each)
 func Heatmap(data [7][24]int) string {
 	var sb strings.Builder
 
-	// Aggregate into 3-hour blocks first and find max
-	blocks := [7][8]int{}
+	// Aggregate into 4-hour blocks first and find max
+	blocks := [7][6]int{}
 	maxVal := 1
 
 	for day := 0; day < 7; day++ {
-		for block := 0; block < 8; block++ {
+		for block := 0; block < 6; block++ {
 			sum := 0
-			for h := 0; h < 3; h++ {
-				hour := block*3 + h
+			for h := 0; h < 4; h++ {
+				hour := block*4 + h
 				sum += data[day][hour]
 			}
 			blocks[day][block] = sum
@@ -138,20 +138,20 @@ func Heatmap(data [7][24]int) string {
 		}
 	}
 
-	// Header
-	header := "    0  3  6  9  12 15 18 21"
+	// Header - compact with padded hours
+	header := "   00 04 08 12 16 20"
 	sb.WriteString(SubtleStyle.Render(header))
 	sb.WriteString("\n")
 
 	days := []string{"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"}
 
 	for day := 0; day < 7; day++ {
-		sb.WriteString(SubtleStyle.Render(fmt.Sprintf(" %s ", days[day])))
+		sb.WriteString(SubtleStyle.Render(fmt.Sprintf("%s ", days[day])))
 
-		for block := 0; block < 8; block++ {
+		for block := 0; block < 6; block++ {
 			sum := blocks[day][block]
 
-			// Normalize and get color (0 = empty, higher = more intense)
+			// Normalize and get color
 			var colorIdx int
 			if sum == 0 {
 				colorIdx = 0
@@ -164,7 +164,7 @@ func Heatmap(data [7][24]int) string {
 			}
 
 			blockStyle := lipgloss.NewStyle().Foreground(HeatmapColors[colorIdx])
-			sb.WriteString(blockStyle.Render("██ "))
+			sb.WriteString(blockStyle.Render("## "))
 		}
 		sb.WriteString("\n")
 	}

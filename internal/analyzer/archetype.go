@@ -3,7 +3,7 @@ package analyzer
 // Archetype represents a developer personality type
 type Archetype struct {
 	Name    string
-	Emoji   string
+	Icon    string
 	Tagline string
 	Score   float64 // Higher = stronger match
 }
@@ -11,13 +11,13 @@ type Archetype struct {
 // All available archetypes
 var archetypes = []struct {
 	Name    string
-	Emoji   string
+	Icon    string
 	Tagline string
 	Detect  func(*Stats) float64
 }{
 	{
 		Name:    "THE SUDO SUMMONER",
-		Emoji:   "⚡",
+		Icon:    "[!]",
 		Tagline: "With great power comes great responsibility",
 		Detect: func(s *Stats) float64 {
 			if s.SudoPct > 15 {
@@ -28,7 +28,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE GIT GLADIATOR",
-		Emoji:   "⚔️",
+		Icon:    "</>",
 		Tagline: "Commit early, commit often",
 		Detect: func(s *Stats) float64 {
 			gitPct := s.CategoryPct["Git"]
@@ -40,7 +40,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE DOCKER CAPTAIN",
-		Emoji:   "🐳",
+		Icon:    "[=]",
 		Tagline: "It works in my container",
 		Detect: func(s *Stats) float64 {
 			return s.CategoryPct["Containers"] * 2.5
@@ -48,7 +48,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE PACKAGE GOBLIN",
-		Emoji:   "📦",
+		Icon:    "[+]",
 		Tagline: "Just one more dependency...",
 		Detect: func(s *Stats) float64 {
 			return s.CategoryPct["Packages"] * 2
@@ -56,11 +56,10 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE VIM WIZARD",
-		Emoji:   "🧙",
+		Icon:    ":wq",
 		Tagline: "I use vim btw",
 		Detect: func(s *Stats) float64 {
 			if s.EditorChoice == "vim" || s.EditorChoice == "nvim" {
-				// Check if in top 5
 				for i, cmd := range s.TopCommands {
 					if i >= 5 {
 						break
@@ -76,7 +75,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE SSH NOMAD",
-		Emoji:   "🌍",
+		Icon:    "~>~",
 		Tagline: "My servers miss me",
 		Detect: func(s *Stats) float64 {
 			return s.CategoryPct["Network"] * 2
@@ -84,7 +83,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE PIPE PLUMBER",
-		Emoji:   "🔧",
+		Icon:    "|>|",
 		Tagline: "Data flows through me",
 		Detect: func(s *Stats) float64 {
 			if s.PipePct > 20 {
@@ -95,10 +94,9 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE SCRIPT SORCERER",
-		Emoji:   "🪄",
+		Icon:    "#!/",
 		Tagline: "Why do it twice when you can automate?",
 		Detect: func(s *Stats) float64 {
-			// Look for script execution patterns
 			var score float64
 			for _, cmd := range s.TopCommands {
 				if cmd.Command == "bash" || cmd.Command == "sh" || cmd.Command == "python" || cmd.Command == "python3" || cmd.Command == "node" {
@@ -110,7 +108,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE DEBUG DETECTIVE",
-		Emoji:   "🔍",
+		Icon:    "[?]",
 		Tagline: "The bug is in here somewhere...",
 		Detect: func(s *Stats) float64 {
 			return s.CategoryPct["Search"] * 3
@@ -118,7 +116,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE CLEAN FREAK",
-		Emoji:   "🧹",
+		Icon:    "[x]",
 		Tagline: "Disk space is sacred",
 		Detect: func(s *Stats) float64 {
 			var score float64
@@ -133,7 +131,7 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE NIGHT OWL",
-		Emoji:   "🦉",
+		Icon:    "(o)",
 		Tagline: "Best code is written after midnight",
 		Detect: func(s *Stats) float64 {
 			if s.NightOwlPct > 15 {
@@ -144,10 +142,9 @@ var archetypes = []struct {
 	},
 	{
 		Name:    "THE GENERALIST",
-		Emoji:   "🎯",
+		Icon:    "[*]",
 		Tagline: "Jack of all trades, master of many",
 		Detect: func(s *Stats) float64 {
-			// Score based on diversity of categories used
 			categoriesUsed := 0
 			for _, pct := range s.CategoryPct {
 				if pct > 2 {
@@ -173,7 +170,7 @@ func DetectArchetype(stats *Stats) *Archetype {
 			bestScore = score
 			bestArchetype = &Archetype{
 				Name:    arch.Name,
-				Emoji:   arch.Emoji,
+				Icon:    arch.Icon,
 				Tagline: arch.Tagline,
 				Score:   score,
 			}
@@ -184,7 +181,7 @@ func DetectArchetype(stats *Stats) *Archetype {
 	if bestArchetype == nil || bestScore < 1 {
 		return &Archetype{
 			Name:    "THE TERMINAL WARRIOR",
-			Emoji:   "⌨️",
+			Icon:    ">_<",
 			Tagline: "Command line is my home",
 			Score:   0,
 		}
@@ -202,10 +199,10 @@ func GetSecondaryArchetypes(stats *Stats, primary *Archetype) []*Archetype {
 			continue
 		}
 		score := arch.Detect(stats)
-		if score > 5 { // Threshold for notable
+		if score > 5 {
 			secondary = append(secondary, &Archetype{
 				Name:    arch.Name,
-				Emoji:   arch.Emoji,
+				Icon:    arch.Icon,
 				Tagline: arch.Tagline,
 				Score:   score,
 			})
@@ -214,4 +211,3 @@ func GetSecondaryArchetypes(stats *Stats, primary *Archetype) []*Archetype {
 
 	return secondary
 }
-
