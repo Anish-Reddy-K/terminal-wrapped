@@ -1,25 +1,25 @@
 #!/bin/bash
 #
-# Terminal Wrapped - Instant Developer Stats
-# Run via: curl -fsSL arkr.ca/terminal-wrapped | bash
+# terminal-wrapped - instant developer stats
+# run via: curl -fsSL arkr.ca/terminal-wrapped | bash
 #
-# This script downloads and runs the terminal-wrapped binary
-# No installation required - just runs and displays your stats
+# this script downloads and runs the terminal-wrapped binary
+# no installation required - just runs and displays your stats
 #
 
 set -e
 
-# Colors for output
+# colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m' # no color
 
-# Configuration
+# configuration
 REPO="Anish-Reddy-K/terminal-wrapped"
 BINARY_NAME="terminal-wrapped"
 
-# Detect OS
+# detect os
 detect_os() {
     case "$(uname -s)" in
         Darwin*)  echo "darwin" ;;
@@ -28,7 +28,7 @@ detect_os() {
     esac
 }
 
-# Detect architecture
+# detect architecture
 detect_arch() {
     case "$(uname -m)" in
         x86_64)   echo "amd64" ;;
@@ -39,33 +39,33 @@ detect_arch() {
     esac
 }
 
-# Main execution
+# main execution
 main() {
     OS=$(detect_os)
     ARCH=$(detect_arch)
 
     if [ "$OS" = "unsupported" ]; then
-        echo -e "${RED}Error: Unsupported operating system. Terminal Wrapped only supports macOS and Linux.${NC}"
+        echo -e "${RED}Error: Unsupported operating system. terminal-wrapped only supports macOS and Linux.${NC}"
         exit 1
     fi
 
     if [ "$ARCH" = "unsupported" ]; then
-        echo -e "${RED}Error: Unsupported architecture. Terminal Wrapped supports x86_64 and arm64.${NC}"
+        echo -e "${RED}Error: Unsupported architecture. terminal-wrapped supports x86_64 and arm64.${NC}"
         exit 1
     fi
 
-    # Get latest release URL from GitHub
+    # get latest release URL from GitHub
     DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${BINARY_NAME}-${OS}-${ARCH}"
     
-    # Create temp directory
+    # create temp directory
     TMP_DIR=$(mktemp -d)
     TMP_BINARY="${TMP_DIR}/${BINARY_NAME}"
 
-    # Cleanup on exit
+    # cleanup on exit
     trap "rm -rf ${TMP_DIR}" EXIT
 
-    # Download binary
-    echo -e "${YELLOW}⬇️  Downloading Terminal Wrapped for ${OS}/${ARCH}...${NC}"
+    # download binary
+    echo -e "${YELLOW} downloading terminal-wrapped for ${OS}/${ARCH}...${NC}"
     
     if command -v curl &> /dev/null; then
         curl -fsSL "$DOWNLOAD_URL" -o "$TMP_BINARY" 2>/dev/null || {
@@ -84,14 +84,14 @@ main() {
         exit 1
     fi
 
-    # Make executable
+    # make executable
     chmod +x "$TMP_BINARY"
 
-    # Run it!
-    echo -e "${GREEN}✨ Running Terminal Wrapped...${NC}\n"
+    # run it!
+    echo -e "${GREEN}✨ Running terminal-wrapped...${NC}\n"
     "$TMP_BINARY" "$@"
 }
 
-# Run main function with all script arguments
+# run main function with all script arguments
 main "$@"
 
